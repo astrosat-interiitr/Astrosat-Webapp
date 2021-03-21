@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react"
 import * as d3Geo from "d3-geo"
-import * as d3 from "d3";
+import * as d3 from "d3"
 import * as d3p from "d3-geo-projection"
 
 import { feature } from "topojson-client"
 
 import './worldmap.css'
 
-const { geoPath, ...projections } = d3Geo
+const { geoPath} = d3Geo
+
+const graticule = d3.geoGraticule10()
+const outline = ({type: "Sphere"})
 
 const cities = [
   { name: "Tokyo",          coordinates: [139.6917,35.6895],  population: 37843000 },
@@ -43,8 +46,19 @@ const cities = [
 ]
 
 const projection = d3p.geoHammer()
-  .scale(160)
+  .scale(100)
   .translate([ 800 / 2, 450 / 2 ])
+
+const width = window.innerWidth
+
+const height = () => {
+    const [[x0, y0], [x1, y1]] = d3.geoPath(projection.fitWidth(width, outline)).bounds(outline);
+    const dy = Math.ceil(y1 - y0), l = Math.min(Math.ceil(x1 - x0), dy);
+    projection.scale(projection.scale() * (l - 1) / l).precision(0.2);
+    return dy;
+  }
+
+const path = d3.geoPath(projection)
 
 const WorldMap = () => {
   const [geographies, setGeographies] = useState([])
@@ -70,44 +84,52 @@ const WorldMap = () => {
     console.log("Marker: ", cities[i])
   }
 
-  return (
-    <div id="wrapper">
-<svg width={ window.innerWidth } height={ window.innerHeight } viewBox="0 0 800 450">
-      <g className="countries">
-        {
-          geographies.map((d,i) => (
-            <path
-              key={ `path-${ i }` }
-              d={ geoPath().projection(projection)(d) }
-              className="country"
-              fill={ `rgba(38,50,56,${ 1 / geographies.length * i})` }
-              stroke="#FFFFFF"
-              strokeWidth={ 0.5 }
-              onClick={ () => handleCountryClick(i) }
-            />
-          ))
-        }
-      </g>
-      <g className="markers">
-        {
-          cities.map((city, i) => (
-            <circle
-              key={ `marker-${i}` }
-              cx={ projection(city.coordinates)[0] }
-              cy={ projection(city.coordinates)[1] }
-              r={ city.population / 3000000 }
-              fill="#E91E63"
-              stroke="#FFFFFF"
-              className="marker"
-              onClick={ () => handleMarkerClick(i) }
-            />
-          ))
-        }
-      </g>
-    </svg>
-    </div>
-    
-  )
+
+
+    return (
+      <div id="wrapper">
+  <svg width={ window.innerWidth } height={ window.innerHeight } viewBox="0 0 800 450">
+      
+  <defs>
+    <path id="outline" d="${path(outline)}" />
+  </defs>
+
+        <g className="countries">
+          {
+            geographies.map((d,i) => (
+              <path
+                key={ `path-${ i }` }
+                d={ geoPath().projection(projection)(d) }
+                className="country"
+                fill={ `rgba(38,50,56,${ 1 / geographies.length * i})` }
+                stroke="#FFFFFF"
+                strokeWidth={ 0.5 }
+                onClick={ () => handleCountryClick(i) }
+              />
+            ))
+          }
+        </g>
+        <g className="markers">
+          {
+            cities.map((city, i) => (
+              <circle
+                key={ `marker-${i}` }
+                cx={ projection(city.coordinates)[0] }
+                cy={ projection(city.coordinates)[1] }
+                r={ city.population / 3000000 }
+                fill="#E91E63"
+                stroke="#FFFFFF"
+                className="marker"
+                onClick={ () => handleMarkerClick(i) }
+              />
+            ))
+          }
+        </g>
+      </svg>
+      </div>
+      
+    )
+  
 }
 
 export default WorldMap
