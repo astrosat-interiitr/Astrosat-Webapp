@@ -1,50 +1,32 @@
-import React, { Component } from 'react'
+import React, { Component, useState  } from 'react'
 
 import {geoPath, } from "d3-geo"
 import * as d3 from "d3"
 
 import {projection, graticule, outline} from "./utils"
+import { geoCraigRaw } from 'd3-geo-projection';
 
 const versor = require("versor");
 
-class Map extends Component {
 
-  constructor (props) {
-    super(props)
+function Map(props){
+  const mapHeight= window.innerHeight;
+  const mapWidth = window.innerWidth;
+  // const [pro, setProjection] = useState(projection);
+  // const [graticule, setGraticule] = useState(graticule);
+  // const [outline, setOutline] = useState(outline);
+  const path = geoPath(projection);
 
-    this.state = {
-      mapHeight: window.innerHeight,
-      mapWidth: window.innerWidth,
-      projection: projection,
-      graticule: graticule,
-      outline: outline,
-      path: geoPath(projection),
-    }
-  }
-
-  componentDidMount() {
-
-    var map = d3.select("svg")
-
-    
-
-    // map.call(this.drag()) // not working
-  }
-
-  /* NOT WORKING
-  drag = (e) => {
-
-    console.log("run");
+  const drag = () => {
     let v0, q0, r0, a0, l;
-    const {projection} = this.state
 
-    const pointer = (e) => {
-      const t = d3.pointers(e, this);
-
+    function pointer(event, that) {
+      const t = d3.pointers(event, that);
+  
       if (t.length !== l) {
         l = t.length;
         if (l > 1) a0 = Math.atan2(t[1][1] - t[0][1], t[1][0] - t[0][0]);
-        dragstarted.apply(this, [e, this]);
+        dragstarted.apply(that, [event, that]);
       }
   
       // For multitouch, average positions and compute rotation.
@@ -57,7 +39,7 @@ class Map extends Component {
   
       return t[0];
     }
-
+    
     const dragstarted = (e) => {
       v0 = versor.cartesian(projection.invert(pointer()));
       q0 = versor(r0 = projection.rotate());
@@ -89,38 +71,30 @@ class Map extends Component {
       .on("drag", dragged);
   }
   
-*/
+  return (
+    <div>
+      <svg 
+        width={mapWidth} 
+        height={mapHeight} 
+        viewBox={`0 0 800 400`}
+      >
+      <defs>
+        <path 
+          id="outline" 
+          d={path(outline)}
+        />
+      </defs>
 
-  render() {
-    const {mapHeight, mapWidth, projection, path} = this.state
+      <use href="#outline" fill="#000"/>
 
-    return (
-      <div>
-        <svg 
-          width={mapWidth} 
-          height={mapHeight} 
-          viewBox={`0 0 800 400`}
-        >
-        <defs>
-          <path 
-            id="outline" 
-            d={path(outline)}
-          />
-        </defs>
-
-        <use href="#outline" fill="#000"/>
-
-        <g>
-          <path d={path(graticule)} stroke="#ccc" fill="none" strokeWidth="0.5"/>
-        </g>
-        
-        <use href="#outline" fill="none" stroke="#000"/>
-        
-        </svg>
-      </div>
-    )
-  }
-
+      <g>
+        <path d={path(graticule)} stroke="#ccc" fill="none" strokeWidth="0.5"/>
+      </g>
+      
+      <use href="#outline" fill="none" stroke="#000"/>
+      
+      </svg>
+    </div>
+  )
 }
-
 export default Map
