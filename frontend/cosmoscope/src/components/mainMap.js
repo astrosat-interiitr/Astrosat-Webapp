@@ -6,35 +6,40 @@ import * as d3 from "d3"
 import { feature } from "topojson-client"
 
 import {projection as initProj, graticule, outline} from "./utils"
+import "./mainMap.css"
 
 const versor = require("versor");
 
 function Map(props){
 
-  const mapWidth = window.innerWidth;
+  const [mapWidth, setMapWidth] = useState(window.innerWidth);
+  const [highlight, toggleHighlight] = useState(false)
+  const [highlightPos, setHighlightPos] = useState([0, 0])
+
   const projection = initProj
 
   const [[x0, y0], [x1, y1]] = d3.geoPath(projection.fitWidth(mapWidth, outline)).bounds(outline);
   const mapHeight = Math.ceil(y1 - y0), l = Math.min(Math.ceil(x1 - x0), mapHeight);
   projection.scale(projection.scale() * (l - 1) / l).precision(0.2);
 
+  const coords = [139.6917,35.6895]
   
   const [path, setPath] = useState(() => geoPath(projection));
   const [geographies, setGeographies] = useState([])
   // const [projection, setProjection] = useState(initProj);
   // const [graticule, setGraticule] = useState(graticule);
 
-  console.log(typeof(path));
-
   var v0, q0, r0;
 
   useEffect(() => {
-    let map = d3.select("svg") 
+    let map = d3.select("#outline") 
     
     map.call(d3.drag()
     .on("start", dragstarted)
     .on("drag", dragged)
     );
+
+    
 
     fetch("/world-110m.json")
       .then(response => {
@@ -63,6 +68,13 @@ function Map(props){
 
     setPath(() => geoPath(projection))
   }
+
+  const handleSourceClick = () => {
+    
+    toggleHighlight(highlight => !highlight)
+    setHighlightPos(coords)
+    console.log(highlight);
+  }
  
   return (
     <div>
@@ -86,21 +98,42 @@ function Map(props){
       
       <use href="#outline" fill="none" stroke="#000"/>
 
-      <g className="countries">
-          {
-            geographies.map((d,i) => (
-              <path
-                key={ `path-${ i }` }
-                d={ geoPath().projection(projection)(d) }
-                className="country"
-                fill={ `rgba(38,50,56,${ 1 / geographies.length * i})` }
-                stroke="#FFFFFF"
-                strokeWidth={ 0.5 }
-                // onClick={ () => handleCountryClick(i) }
-              />
-            ))
-          }
+      <g className="sources">
+          
+        <circle
+          key={ `marker-` }
+          cx={ projection(coords)[0] }
+          cy={ projection(coords)[1] }
+          r={ 10 }
+          fill="#99fadc"
+          stroke="#FFFFFF"
+          className="marker"
+          onClick={ () => handleSourceClick() }
+        />
+      </g>
+
+      {highlight && (
+        <g>
+          <circle
+          cx={ projection(highlightPos)[0] }
+          cy={ projection(highlightPos)[1] }
+          r={ 10 }
+          fill="none"
+          stroke="#7021e4"
+          strokeWidth="3"
+          className="highlight"
+          onClick={ () => handleSourceClick() }
+        />
+        <text 
+          x={ projection(highlightPos)[0] + 4 }
+          y={ projection(highlightPos)[1] + 4 }
+          class="small"
+          fill="red"
+          >
+            J2000
+        </text>
         </g>
+      )}
       
       </svg>
     </div>
