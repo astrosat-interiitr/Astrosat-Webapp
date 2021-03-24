@@ -1,9 +1,10 @@
 import React, { Component, useState, useEffect, useRef  } from 'react'
+import 'semantic-ui-css/semantic.min.css'
 
 import {geoPath, } from "d3-geo"
 import * as d3 from "d3"
 
-import { Dropdown } from 'semantic-ui-react'
+import { Dropdown, Button } from 'semantic-ui-react'
 
 import {aitoffProj, hammerProj, mollweideProj, graticule, outline} from "./utils"
 import "./mainMap.css"
@@ -139,15 +140,36 @@ function Map(props){
     });
   }
 
+  // handlePdf = e => {
+  //   window.open(require('../resources/info.pdf'), "_blank")
+  // }
+
   function InfoPanel() {
     return(
       <div class="bg">
-        <div>
+        <div class="bgg"> 
         <p>Name: {sources[highlightId].name}</p>
         <p>Ra, Dec: {sources[highlightId].equatorial_ra}, {sources[highlightId].equatorial_dec}</p>
         <p>Gal. Long/Lat: {sources[highlightId].galactic_longitude}, {sources[highlightId].galactic_latitude}</p>
         <p>X-Ray Flux: {sources[highlightId].x_ray_flux}</p>
+        <p>AstroSat? : {highlightId === 167 ? "yes" : "no"}</p>
         </div>
+        {highlightId === 167 && (
+          <div>
+            <p>Observation date: 2018-09-17</p>
+            <p>Observation time: 08:09:52</p>
+            <p>Cycle: A04_230	T01</p>
+            <p>Observation ID: 04_230T01_9000002374</p>
+            <p>Observation ID: 04_230T01_9000002374</p>
+            <p>Telescope: laxpc1</p>
+            <Button 
+              // onClick={handlePdf}
+            >
+              Download PDF
+            </Button>
+          </div>
+        )}
+        
       </div>
     )
   }
@@ -173,7 +195,6 @@ function Map(props){
     }
 
     if (res !== -1) {
-      console.log(res);
       setHighlightId(res)
       toggleHighlight(true)
     }
