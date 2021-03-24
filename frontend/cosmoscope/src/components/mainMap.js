@@ -38,7 +38,7 @@ function Map(props){
   const [query, setQuery] = useState("")
   const [projVal, setProjVal] = useState("A")
 
-  const [projection, setProjection] = useState(aitoffProj);
+  const [projection, setProjection] = useState(() => aitoffProj);
 
   const [[x0, y0], [x1, y1]] = d3.geoPath(projection.fitWidth(mapWidth, outline)).bounds(outline);
   const mapHeight = Math.ceil(y1 - y0), l = Math.min(Math.ceil(x1 - x0), mapHeight);
@@ -185,12 +185,13 @@ function Map(props){
 
     console.log(value.value)
     if (value.value === "A") {
-      setPath(() => geoPath(aitoffProj))
+      setProjection(() => aitoffProj)
     } else if (value.value === "H") {
-      setPath(() => geoPath(hammerProj))
+      setProjection(() => hammerProj)
     } if (value.value === "M") {
-      setPath(() => geoPath(mollweideProj))
+      setProjection(() => mollweideProj)
     }
+    setPath(() => geoPath(projection))
     setProjVal(value.value)
   }
 
