@@ -10,6 +10,11 @@ import {aitoffProj, hammerProj, mollweideProj, graticule, outline} from "./utils
 import "./mainMap.css"
 
 import Navbar from "./navbar"
+ 
+ 
+
+import { Form, Input, Button, Checkbox, Select, Row, Col } from "antd";
+const { Option } = Select;
 
 const versor = require("versor");
 
@@ -202,35 +207,81 @@ function Map(props){
   }
 
   const handleProjChange = (e, value) => {
-    e.preventDefault();
-
-    console.log(value.value)
-    if (value.value === "A") {
-      setProjection(() => aitoffProj)
-    } else if (value.value === "H") {
-      setProjection(() => hammerProj)
-    } if (value.value === "M") {
-      setProjection(() => mollweideProj)
-    }
-    setPath(() => geoPath(projection))
-    setProjVal(value.value)
+    console.log(value)
   }
+
+  const onFinish = (values) => {
+   console.log(values) 
+  }
+
+  const onFinishFailed = (errorInfo) => {
+    console.log("Failed:", errorInfo);
+  };
+
+  
 
   function Footer() {
     return (
-      <div className="custom-footer col p-3 d-flex justify-content-center " style={{color:'black', background:'#c0b9b924'}}>
-          <form class="col-md-8 form-inline my-2">
-              <input class="form-control col-lg-10" type="search" placeholder="Search" aria-label="Search" style={{opacity:1}} value={query} onChange={e => setQuery(e.target.value)} />
-              <button class="btn btn-outline-success my-2 my-sm-0" type="submit" onClick={onSubmit}>Search</button>
-          </form>
-          <Dropdown
-            placeholder='Select Projection'
-            fluid
-            selection
-            options={projections}
-            value={projVal}
-            onChange = {handleProjChange}
-          />
+      <div className="custom-footer" style={{color:'black', background:'#c0b9b924'}}>
+        <Row>
+        <Col span = {20}>
+        <Form
+          name="Query"
+          initialValues={{ remember: true }}
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+          layout="inline"
+        >
+
+
+          <Form.Item
+            label="Search"
+            name="search"
+            rules={[{ required: true, message: "Please input your query!" }]}
+          >
+            <Input  />
+          </Form.Item>
+
+          <Form.Item>
+          <Button type="primary" htmlType="submit">
+            Submit
+          </Button>
+        </Form.Item>
+        </Form>
+        </Col>
+
+        <Col >
+
+        <Form
+          name="Projection"
+          layout="inline"
+        >
+        <Form.Item
+          label="Projection"
+          name="type"
+          rules={[{ required: true, message: "Please select projection" }]}
+
+          style = {{
+            display : "flex",
+            justifyContent : "flex-end",
+            justifyItems : "flex-end"
+          }}
+        >
+          <Select placeholder="Query Type" onChange = {handleProjChange} >
+            <Option value="A">AITOFF</Option>
+            <Option value="H">Hammer</Option>
+            <Option value="M">Mollweide</Option>
+          </Select>
+        </Form.Item>
+
+   
+        </Form>
+
+          </Col>
+
+        
+        </Row>
+
       </div>
     );
   }
