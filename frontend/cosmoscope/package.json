@@ -13,6 +13,8 @@
     "react-dom": "^17.0.1",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
+    "react-svg-pan-zoom": "^3.10.0",
+    "svg-pan-zoom": "^3.6.1",
     "topojson-client": "^3.1.0",
     "versor": "^0.1.2",
     "web-vitals": "^1.1.1"

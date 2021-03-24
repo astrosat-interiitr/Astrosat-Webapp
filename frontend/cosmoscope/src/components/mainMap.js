@@ -1,9 +1,7 @@
-import React, { Component, useState, useEffect  } from 'react'
+import React, { Component, useState, useEffect, useRef  } from 'react'
 
 import {geoPath, } from "d3-geo"
 import * as d3 from "d3"
-
-import { feature } from "topojson-client"
 
 import {projection as initProj, graticule, outline} from "./utils"
 import "./mainMap.css"
@@ -30,29 +28,34 @@ function Map(props){
   // const [projection, setProjection] = useState(initProj);
   // const [graticule, setGraticule] = useState(graticule);
 
-  var v0, q0, r0;
+  var v0, q0, r0, slast;
+
+  const Viewer = useRef(null);
+  
+  
 
   useEffect(() => {
-    let map = d3.select("#outline") 
+
+    fetch("http://127.0.0.1:8000/cosmicsource/")
+  .then(response => {
+    if (response.status !== 200) {
+      console.log(`There was a problem: ${response.status}`)
+      return
+    }
+    response.json().then(cosmicData => {
+      setSources(cosmicData)
+    })
+  })
     
+    let map = d3.select("#outline") 
+  
     map.call(d3.drag()
     .on("start", dragstarted)
     .on("drag", dragged)
     );
 
-    
-
-    fetch("http://127.0.0.1:8000/cosmicsource/")
-      .then(response => {
-        if (response.status !== 200) {
-          console.log(`There was a problem: ${response.status}`)
-          return
-        }
-        response.json().then(cosmicData => {
-          setSources(cosmicData)
-        })
-      })
-  })
+    // map.call(zoom(projection))
+  }, [])
 
   const dragstarted = (event) => {
     v0 = versor.cartesian(projection.invert(d3.pointer(event)));
@@ -61,7 +64,6 @@ function Map(props){
   }
   
   const dragged = (event) => {
-    let p = d3.pointer(event)
     var v1 = versor.cartesian(projection.rotate(r0).invert(d3.pointer(event))),
         q1 = versor.multiply(q0, versor.delta(v0, v1)),
         r1 = versor.rotation(q1);
@@ -76,6 +78,48 @@ function Map(props){
     setHighlightPos([sources[id].equatorial_ra, sources[id].equatorial_dec])
     setHighlightName(sources[id].name)
   }
+
+  function zoom(projection, {
+    // Capture the projection’s original scale, before any zooming.
+    scale = projection._scale === undefined
+      ? (projection._scale = projection.scale()) 
+      : projection._scale,
+    scaleExtent = [0.8, 8]
+  } = {}) {
+    let vv0, qq0, rr0, aa0, tl;    
+  
+    const zoomstarted = (event) => {
+      vv0 = versor.cartesian(projection.invert(d3.pointer(event)));
+      qq0 = versor((rr0 = projection.rotate()));
+    }
+  
+    const zoomed = (event) => {
+      projection.scale(event.transform.k);
+      const pt = d3.pointer(event);
+      const vv1 = versor.cartesian(projection.rotate(rr0).invert(pt));
+      const deltaa = versor.delta(vv0, vv1);
+      let qq1 = versor.multiply(qq0, deltaa);
+  
+      projection.rotate(versor.rotation(qq1));
+
+      setPath(() => geoPath(projection))
+    }
+
+    const zoom = d3.zoom()
+        .scaleExtent(scaleExtent.map(x => x * scale))
+        .on("start", zoomstarted)
+        .on("zoom", zoomed);
+  
+    return Object.assign(selection => selection
+        .property("__zoom", d3.zoomIdentity.scale(projection.scale()))
+        .call(zoom), {
+      on(type, ...options) {
+        return options.length
+            ? (zoom.on(type, ...options), this)
+            : zoom.on(type);
+      }
+    });
+  }
  
   return (
     <div>
@@ -83,6 +127,7 @@ function Map(props){
         width = {mapWidth}
         height = {mapHeight}
         viewBox={`0 0 ${mapWidth} ${mapHeight}`}
+        id="map"
       >
       <defs>
         <path 
