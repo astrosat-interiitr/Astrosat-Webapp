@@ -3,14 +3,32 @@ import React, { Component, useState, useEffect, useRef  } from 'react'
 import {geoPath, } from "d3-geo"
 import * as d3 from "d3"
 
+import { Dropdown } from 'semantic-ui-react'
 
-
-import {projection as initProj, graticule, outline} from "./utils"
+import {aitoffProj, hammerProj, mollweideProj, graticule, outline} from "./utils"
 import "./mainMap.css"
 
 import Navbar from "./navbar"
 
 const versor = require("versor");
+
+const projections = [
+  {
+    key: 'Aitoff',
+    text: 'Aitoff',
+    value: "A"
+  },
+  {
+    key: 'Hammer',
+    text: 'Hammer',
+    value: "H"
+  },
+  {
+    key: 'Mollweide',
+    text: 'Mollweide',
+    value: "M"
+  }
+]
 
 function Map(props){
 
@@ -18,18 +36,17 @@ function Map(props){
   const [highlight, toggleHighlight] = useState(false)
   const [highlightId, setHighlightId] = useState()
   const [query, setQuery] = useState("")
+  const [projVal, setProjVal] = useState("A")
 
-  const projection = initProj
+  const [projection, setProjection] = useState(aitoffProj);
 
   const [[x0, y0], [x1, y1]] = d3.geoPath(projection.fitWidth(mapWidth, outline)).bounds(outline);
   const mapHeight = Math.ceil(y1 - y0), l = Math.min(Math.ceil(x1 - x0), mapHeight);
   projection.scale(projection.scale() * (l - 1) / l).precision(0.2);
-
-  const coords = [139.6917,35.6895]
   
   const [path, setPath] = useState(() => geoPath(projection));
   const [sources, setSources] = useState([])
-  // const [projection, setProjection] = useState(initProj);
+
   // const [graticule, setGraticule] = useState(graticule);
 
   var v0, q0, r0;
@@ -56,7 +73,7 @@ function Map(props){
     .on("drag", dragged)
     );
 
-    map.call(zoom(projection))
+    // map.call(zoom(projection))
   }, [])
 
   const dragstarted = (event) => {
@@ -103,7 +120,7 @@ function Map(props){
   
       projection.rotate(versor.rotation(qq1));
 
-      // setPath(() => geoPath(projection))
+      setPath(() => geoPath(projection))
     }
 
     const zoom = d3.zoom()
@@ -145,8 +162,7 @@ function Map(props){
 }
 
   const onSubmit = (e) => {
-    console.log(query);
-
+    e.preventDefault();
     var res = findWithAttr(sources, "name", query)
     if (res === -1) {
       res = findWithAttr(sources, "name2", query)
@@ -156,31 +172,43 @@ function Map(props){
       res = findWithAttr(sources, "name3", query)
     }
 
-    if (res != -1) {
+    if (res !== -1) {
+      console.log(res);
       setHighlightId(res)
       toggleHighlight(true)
     }
 
   }
 
+  const handleProjChange = (e, value) => {
+    e.preventDefault();
+
+    console.log(value.value)
+    if (value.value === "A") {
+      setPath(() => geoPath(aitoffProj))
+    } else if (value.value === "H") {
+      setPath(() => geoPath(hammerProj))
+    } if (value.value === "M") {
+      setPath(() => geoPath(mollweideProj))
+    }
+    setProjVal(value.value)
+  }
+
   function Footer() {
     return (
       <div className="custom-footer col p-3 d-flex justify-content-center " style={{color:'black', background:'#c0b9b924'}}>
           <form class="col-md-8 form-inline my-2">
-              <input class="form-control col-lg-8" type="search" placeholder="Search" aria-label="Search" style={{opacity:1}} value={query} onChange={e => setQuery(e.target.value)} />
+              <input class="form-control col-lg-10" type="search" placeholder="Search" aria-label="Search" style={{opacity:1}} value={query} onChange={e => setQuery(e.target.value)} />
               <button class="btn btn-outline-success my-2 my-sm-0" type="submit" onClick={onSubmit}>Search</button>
-              <div class="btn-group dropup">
-                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  Projections
-                </button>
-                <div class="dropdown-menu">
-                  <a class="dropdown-item" href="#">Aitoff</a>
-                  <a class="dropdown-item" href="#">Hammer</a>
-                  <a class="dropdown-item" href="#">Mollweide</a>
-                </div>
-              </div>
-              
           </form>
+          <Dropdown
+            placeholder='Select Projection'
+            fluid
+            selection
+            options={projections}
+            value={projVal}
+            onChange = {handleProjChange}
+          />
       </div>
     );
   }
@@ -208,8 +236,6 @@ function Map(props){
           <stop offset="100%" style={{stopColor: `rgb(0,0,0)`, stopOpacity:1}} />
         </linearGradient>
       </defs>
-
-      {/* <rect width="100%" height="100%" fill="url(#grad2)" /> */}
 
       <use href="#outline" fill="#000"/>
 
