@@ -1,14 +1,16 @@
 import React from 'react'
 import './App.css'
-import { HashRouter as Router, Route, Switch } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
 import Map from './components/mainMap'
+import Welcome from './components/welcome'
 
 function App() {
   return (
     <Router className="App">
      <div className='App'>
       <Switch>
-          <Route exact path='/' component={Map} />
+          <Route exact path='/home' component={Map} />
+          <Route exact path='/welcome' component={Welcome} />
         </Switch> 
      </div>
     </Router>
