@@ -1,20 +1,21 @@
 import React, { Component, useState, useEffect  } from 'react'
-import './welcome.css'
+import styles from './welcome.module.scss'
+import {NavLink} from "react-router-dom"
 
 function Welcome(props) {
   return (
-      <div id="welcome">
-        <h1 id="title">CosmoScope</h1>
+      <div className ={styles.welcome}>
+        <div className ={styles.title}>CosmoScope</div>
 
-        <h2 id="desc">A web based visualisation tool for AstroSat observations!</h2>
+        <div className={styles.desc}>A web based visualisation tool for AstroSat observations!</div>
 
-        <a href="/home" class="animated-button7">
+        <NavLink to="/home" className={styles.animated_button7}>
           <span></span>
           <span></span>
           <span></span>
           <span></span>
           Get Started
-        </a>
+        </NavLink>
       </div>
       
   )
