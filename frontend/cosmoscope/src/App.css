@@ -4,6 +4,8 @@
   width: auto !important;
   margin: 0 !important;
   padding: 0 !important;
-  background: rgb(2,0,36);
+  /* background: rgb(2,0,36); */
   background: radial-gradient(circle, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 37%, rgba(0,212,255,1) 100%);
+
+  /* background: red; */
 }
