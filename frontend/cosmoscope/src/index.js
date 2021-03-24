@@ -7,7 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'font-awesome/css/font-awesome.min.css';
 import 'bootstrap-social/bootstrap-social.css';
 import 'semantic-ui-css/semantic.min.css'
-
+import 'antd/dist/antd.css';
 
 ReactDOM.render(
   <React.StrictMode>
