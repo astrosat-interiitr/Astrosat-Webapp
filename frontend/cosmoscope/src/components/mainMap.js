@@ -1,126 +1,153 @@
-import React, { Component } from 'react'
+import React, { Component, useState, useEffect  } from 'react'
 
 import {geoPath, } from "d3-geo"
 import * as d3 from "d3"
 
-import {projection, graticule, outline} from "./utils"
+import { feature } from "topojson-client"
+
+import {projection as initProj, graticule, outline} from "./utils"
+import "./mainMap.css"
 
 const versor = require("versor");
 
-class Map extends Component {
+function Map(props){
 
-  constructor (props) {
-    super(props)
+  const [mapWidth, setMapWidth] = useState(window.innerWidth);
+  const [highlight, toggleHighlight] = useState(false)
+  const [highlightPos, setHighlightPos] = useState([0, 0])
+  const [highlightName, setHighlightName] = useState("")
 
-    this.state = {
-      mapHeight: window.innerHeight,
-      mapWidth: window.innerWidth,
-      projection: projection,
-      graticule: graticule,
-      outline: outline,
-      path: geoPath(projection),
-    }
-  }
+  const projection = initProj
 
-  componentDidMount() {
+  const [[x0, y0], [x1, y1]] = d3.geoPath(projection.fitWidth(mapWidth, outline)).bounds(outline);
+  const mapHeight = Math.ceil(y1 - y0), l = Math.min(Math.ceil(x1 - x0), mapHeight);
+  projection.scale(projection.scale() * (l - 1) / l).precision(0.2);
 
-    var map = d3.select("svg")
+  const coords = [139.6917,35.6895]
+  
+  const [path, setPath] = useState(() => geoPath(projection));
+  const [sources, setSources] = useState([])
+  // const [projection, setProjection] = useState(initProj);
+  // const [graticule, setGraticule] = useState(graticule);
+
+  var v0, q0, r0;
+
+  useEffect(() => {
+    let map = d3.select("#outline") 
+    
+    map.call(d3.drag()
+    .on("start", dragstarted)
+    .on("drag", dragged)
+    );
 
     
 
-    // map.call(this.drag()) // not working
-  }
+    fetch("http://127.0.0.1:8000/cosmicsource/")
+      .then(response => {
+        if (response.status !== 200) {
+          console.log(`There was a problem: ${response.status}`)
+          return
+        }
+        response.json().then(cosmicData => {
+          setSources(cosmicData)
+        })
+      })
+  })
 
-  /* NOT WORKING
-  drag = (e) => {
-
-    console.log("run");
-    let v0, q0, r0, a0, l;
-    const {projection} = this.state
-
-    const pointer = (e) => {
-      const t = d3.pointers(e, this);
-
-      if (t.length !== l) {
-        l = t.length;
-        if (l > 1) a0 = Math.atan2(t[1][1] - t[0][1], t[1][0] - t[0][0]);
-        dragstarted.apply(this, [e, this]);
-      }
-  
-      // For multitouch, average positions and compute rotation.
-      if (l > 1) {
-        const x = d3.mean(t, p => p[0]);
-        const y = d3.mean(t, p => p[1]);
-        const a = Math.atan2(t[1][1] - t[0][1], t[1][0] - t[0][0]);
-        return [x, y, a];
-      }
-  
-      return t[0];
-    }
-
-    const dragstarted = (e) => {
-      v0 = versor.cartesian(projection.invert(pointer()));
-      q0 = versor(r0 = projection.rotate());
-    }
-
-    const dragged = (e) => {
-
-      const p = pointer();
-      const v1 = versor.cartesian(projection.rotate(r0).invert(p));
-      const delta = versor.delta(v0, v1);
-      let q1 = versor.multiply(q0, delta);
-  
-      // For multitouch, compose with a rotation around the axis.
-      if (p[2]) {
-        const d = (p[2] - a0) / 2;
-        const s = -Math.sin(d);
-        const c = Math.sign(Math.cos(d));
-        q1 = versor.multiply([Math.sqrt(1 - s * s), 0, 0, c * s], q1);
-      }
-  
-      this.setState({projection: projection.rotate(versor.rotation(q1))})
-  
-      // In vicinity of the antipode (unstable) of q0, restart.
-      if (delta[0] < 0.7) dragstarted.apply(this, [e, this]);
-    }
-
-    return d3.drag()
-      .on("start", dragstarted)
-      .on("drag", dragged);
+  const dragstarted = (event) => {
+    v0 = versor.cartesian(projection.invert(d3.pointer(event)));
+    r0 = projection.rotate();
+    q0 = versor(r0);
   }
   
-*/
+  const dragged = (event) => {
+    let p = d3.pointer(event)
+    var v1 = versor.cartesian(projection.rotate(r0).invert(d3.pointer(event))),
+        q1 = versor.multiply(q0, versor.delta(v0, v1)),
+        r1 = versor.rotation(q1);
+    projection.rotate(r1);
 
-  render() {
-    const {mapHeight, mapWidth, projection, path} = this.state
+    setPath(() => geoPath(projection))
+  }
 
-    return (
-      <div>
-        <svg 
-          width={mapWidth} 
-          height={mapHeight} 
-          viewBox={`0 0 800 400`}
-        >
-        <defs>
-          <path 
-            id="outline" 
-            d={path(outline)}
-          />
-        </defs>
+  const handleSourceClick = (id) => {
+    
+    toggleHighlight(highlight => !highlight)
+    setHighlightPos([sources[id].equatorial_ra, sources[id].equatorial_dec])
+    setHighlightName(sources[id].name)
+  }
+ 
+  return (
+    <div>
+      <svg
+        width = {mapWidth}
+        height = {mapHeight}
+        viewBox={`0 0 ${mapWidth} ${mapHeight}`}
+      >
+      <defs>
+        <path 
+          id="outline" 
+          d={path(outline)}
+        />
+        <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style={{stopColor: `rgb(0,0,255)`, stopOpacity:1}} />
+          <stop offset="100%" style={{stopColor: `rgb(0,0,0)`, stopOpacity:1}} />
+        </linearGradient>
+      </defs>
 
-        <use href="#outline" fill="#000"/>
+      {/* <rect width="100%" height="100%" fill="url(#grad2)" /> */}
 
+      <use href="#outline" fill="#000"/>
+
+      <g>
+        <path d={path(graticule)} stroke="#ccc" fill="none" strokeWidth="0.5"/>
+      </g>
+      
+      <use href="#outline" fill="none" stroke="#000"/>
+
+      <g className="sources">
+        {
+          sources.map((source, i) => (
+            <circle
+              key={i}
+              cx={ projection([source.equatorial_ra, source.equatorial_dec])[0] }
+              cy={ projection([source.equatorial_ra, source.equatorial_dec])[1] }
+              r={ 5 }
+              fill="#99fadc"
+              stroke="#FFFFFF"
+              className="marker"
+              onClick={ () => handleSourceClick(i) }
+            />
+
+          ))
+        }  
+      </g>
+
+      {highlight && (
         <g>
-          <path d={path(graticule)} stroke="#ccc" fill="none" strokeWidth="0.5"/>
+          <circle
+          cx={ projection(highlightPos)[0] }
+          cy={ projection(highlightPos)[1] }
+          r={10}
+          fill="none"
+          stroke="#7021e4"
+          strokeWidth="3"
+          className="highlight"
+          onClick={ () => handleSourceClick() }
+        />
+        <text 
+          x={ projection(highlightPos)[0] + 4 }
+          y={ projection(highlightPos)[1] + 4 }
+          class="small"
+          fill="red"
+          >
+            {highlightName}
+        </text>
         </g>
-        
-        <use href="#outline" fill="none" stroke="#000"/>
-        
-        </svg>
-      </div>
-    )
-  }
-
+      )}
+      
+      </svg>
+    </div>
+  )
 }
-
 export default Map
