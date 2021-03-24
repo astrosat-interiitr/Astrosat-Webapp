@@ -15,6 +15,7 @@ function Map(props){
   const [mapWidth, setMapWidth] = useState(window.innerWidth);
   const [highlight, toggleHighlight] = useState(false)
   const [highlightPos, setHighlightPos] = useState([0, 0])
+  const [highlightName, setHighlightName] = useState("")
 
   const projection = initProj
 
@@ -25,7 +26,7 @@ function Map(props){
   const coords = [139.6917,35.6895]
   
   const [path, setPath] = useState(() => geoPath(projection));
-  const [geographies, setGeographies] = useState([])
+  const [sources, setSources] = useState([])
   // const [projection, setProjection] = useState(initProj);
   // const [graticule, setGraticule] = useState(graticule);
 
@@ -41,14 +42,14 @@ function Map(props){
 
     
 
-    fetch("/world-110m.json")
+    fetch("http://127.0.0.1:8000/cosmicsource/")
       .then(response => {
         if (response.status !== 200) {
           console.log(`There was a problem: ${response.status}`)
           return
         }
-        response.json().then(worlddata => {
-          setGeographies(feature(worlddata, worlddata.objects.countries).features)
+        response.json().then(cosmicData => {
+          setSources(cosmicData)
         })
       })
   })
@@ -69,11 +70,11 @@ function Map(props){
     setPath(() => geoPath(projection))
   }
 
-  const handleSourceClick = () => {
+  const handleSourceClick = (id) => {
     
     toggleHighlight(highlight => !highlight)
-    setHighlightPos(coords)
-    console.log(highlight);
+    setHighlightPos([sources[id].equatorial_ra, sources[id].equatorial_dec])
+    setHighlightName(sources[id].name)
   }
  
   return (
@@ -88,7 +89,13 @@ function Map(props){
           id="outline" 
           d={path(outline)}
         />
+        <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style={{stopColor: `rgb(0,0,255)`, stopOpacity:1}} />
+          <stop offset="100%" style={{stopColor: `rgb(0,0,0)`, stopOpacity:1}} />
+        </linearGradient>
       </defs>
+
+      {/* <rect width="100%" height="100%" fill="url(#grad2)" /> */}
 
       <use href="#outline" fill="#000"/>
 
@@ -99,17 +106,21 @@ function Map(props){
       <use href="#outline" fill="none" stroke="#000"/>
 
       <g className="sources">
-          
-        <circle
-          key={ `marker-` }
-          cx={ projection(coords)[0] }
-          cy={ projection(coords)[1] }
-          r={ 10 }
-          fill="#99fadc"
-          stroke="#FFFFFF"
-          className="marker"
-          onClick={ () => handleSourceClick() }
-        />
+        {
+          sources.map((source, i) => (
+            <circle
+              key={i}
+              cx={ projection([source.equatorial_ra, source.equatorial_dec])[0] }
+              cy={ projection([source.equatorial_ra, source.equatorial_dec])[1] }
+              r={ 5 }
+              fill="#99fadc"
+              stroke="#FFFFFF"
+              className="marker"
+              onClick={ () => handleSourceClick(i) }
+            />
+
+          ))
+        }  
       </g>
 
       {highlight && (
@@ -117,7 +128,7 @@ function Map(props){
           <circle
           cx={ projection(highlightPos)[0] }
           cy={ projection(highlightPos)[1] }
-          r={ 10 }
+          r={10}
           fill="none"
           stroke="#7021e4"
           strokeWidth="3"
@@ -130,7 +141,7 @@ function Map(props){
           class="small"
           fill="red"
           >
-            J2000
+            {highlightName}
         </text>
         </g>
       )}
