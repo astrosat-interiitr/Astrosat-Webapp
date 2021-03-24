@@ -3,8 +3,12 @@ import React, { Component, useState, useEffect, useRef  } from 'react'
 import {geoPath, } from "d3-geo"
 import * as d3 from "d3"
 
+
+
 import {projection as initProj, graticule, outline} from "./utils"
 import "./mainMap.css"
+
+import Navbar from "./navbar"
 
 const versor = require("versor");
 
@@ -12,8 +16,8 @@ function Map(props){
 
   const [mapWidth, setMapWidth] = useState(window.innerWidth);
   const [highlight, toggleHighlight] = useState(false)
-  const [highlightPos, setHighlightPos] = useState([0, 0])
-  const [highlightName, setHighlightName] = useState("")
+  const [highlightId, setHighlightId] = useState()
+  const [query, setQuery] = useState("")
 
   const projection = initProj
 
@@ -28,9 +32,7 @@ function Map(props){
   // const [projection, setProjection] = useState(initProj);
   // const [graticule, setGraticule] = useState(graticule);
 
-  var v0, q0, r0, slast;
-
-  const Viewer = useRef(null);
+  var v0, q0, r0;
   
   
 
@@ -54,7 +56,7 @@ function Map(props){
     .on("drag", dragged)
     );
 
-    // map.call(zoom(projection))
+    map.call(zoom(projection))
   }, [])
 
   const dragstarted = (event) => {
@@ -75,8 +77,7 @@ function Map(props){
   const handleSourceClick = (id) => {
     
     toggleHighlight(highlight => !highlight)
-    setHighlightPos([sources[id].equatorial_ra, sources[id].equatorial_dec])
-    setHighlightName(sources[id].name)
+    setHighlightId(id)
   }
 
   function zoom(projection, {
@@ -102,7 +103,7 @@ function Map(props){
   
       projection.rotate(versor.rotation(qq1));
 
-      setPath(() => geoPath(projection))
+      // setPath(() => geoPath(projection))
     }
 
     const zoom = d3.zoom()
@@ -120,9 +121,77 @@ function Map(props){
       }
     });
   }
+
+  function InfoPanel() {
+    return(
+      <div class="bg">
+        <div>
+        <p>Name: {sources[highlightId].name}</p>
+        <p>Ra, Dec: {sources[highlightId].equatorial_ra}, {sources[highlightId].equatorial_dec}</p>
+        <p>Gal. Long/Lat: {sources[highlightId].galactic_longitude}, {sources[highlightId].galactic_latitude}</p>
+        <p>X-Ray Flux: {sources[highlightId].x_ray_flux}</p>
+        </div>
+      </div>
+    )
+  }
+  
+  function findWithAttr(array, attr, value) {
+    for(var i = 0; i < array.length; i += 1) {
+        if(array[i][attr] === value) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+  const onSubmit = (e) => {
+    console.log(query);
+
+    var res = findWithAttr(sources, "name", query)
+    if (res === -1) {
+      res = findWithAttr(sources, "name2", query)
+    }
+
+    if (res === -1) {
+      res = findWithAttr(sources, "name3", query)
+    }
+
+    if (res != -1) {
+      setHighlightId(res)
+      toggleHighlight(true)
+    }
+
+  }
+
+  function Footer() {
+    return (
+      <div className="custom-footer col p-3 d-flex justify-content-center " style={{color:'black', background:'#c0b9b924'}}>
+          <form class="col-md-8 form-inline my-2">
+              <input class="form-control col-lg-8" type="search" placeholder="Search" aria-label="Search" style={{opacity:1}} value={query} onChange={e => setQuery(e.target.value)} />
+              <button class="btn btn-outline-success my-2 my-sm-0" type="submit" onClick={onSubmit}>Search</button>
+              <div class="btn-group dropup">
+                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Projections
+                </button>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="#">Aitoff</a>
+                  <a class="dropdown-item" href="#">Hammer</a>
+                  <a class="dropdown-item" href="#">Mollweide</a>
+                </div>
+              </div>
+              
+          </form>
+      </div>
+    );
+  }
  
   return (
     <div>
+      <div class="overlay"><Navbar/></div>
+      {
+        highlight && (<div><InfoPanel id={1}/></div>)
+      }
+      
       <svg
         width = {mapWidth}
         height = {mapHeight}
@@ -171,8 +240,8 @@ function Map(props){
       {highlight && (
         <g>
           <circle
-          cx={ projection(highlightPos)[0] }
-          cy={ projection(highlightPos)[1] }
+          cx={ projection([sources[highlightId].equatorial_ra, sources[highlightId].equatorial_dec])[0] }
+          cy={ projection([sources[highlightId].equatorial_ra, sources[highlightId].equatorial_dec])[1] }
           r={10}
           fill="none"
           stroke="#7021e4"
@@ -181,18 +250,24 @@ function Map(props){
           onClick={ () => handleSourceClick() }
         />
         <text 
-          x={ projection(highlightPos)[0] + 4 }
-          y={ projection(highlightPos)[1] + 4 }
+          x={ projection([sources[highlightId].equatorial_ra, sources[highlightId].equatorial_dec])[0] + 4 }
+          y={ projection([sources[highlightId].equatorial_ra, sources[highlightId].equatorial_dec])[1] + 4 }
           class="small"
           fill="red"
           >
-            {highlightName}
+            {sources[highlightId].name}
         </text>
         </g>
       )}
       
       </svg>
+
+      <div class="overlay2">
+        {Footer()}
+      </div>
     </div>
   )
 }
+
+
 export default Map

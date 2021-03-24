@@ -2,3 +2,40 @@ svg{
   padding-top: 1%  !important;
   margin-top: 0% !important;
 }
+
+.overlay {
+  /* Height & width depends on how you want to reveal the overlay (see JS below) */   
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  width: 100% !important;
+}
+
+.overlay2{
+  position:absolute;
+  bottom:0;
+  width:100%;
+}
+
+.bg{
+  position: absolute;
+  margin-top: 10%;
+  padding-left: 1%;
+  left: 0%;
+  text-align: left;
+  z-index: 1;
+  background-color: aqua;
+  opacity: 0.5;
+  box-shadow: 5px 10px;
+}
+
+.newsletter-bg {
+    
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 30px;
+    margin: 0 auto;
+  background-position: center -100px;
+  -webkit-filter: blur(7px);
+}
