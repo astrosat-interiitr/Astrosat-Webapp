@@ -1,10 +1,12 @@
 import React, { Component, useState, useEffect, useRef  } from 'react'
 import 'semantic-ui-css/semantic.min.css'
 
+import pdf from "../resources/info.pdf"
+
 import {geoPath, } from "d3-geo"
 import * as d3 from "d3"
 
-import { Dropdown, Button } from 'semantic-ui-react'
+import { Dropdown} from 'semantic-ui-react'
 
 import {aitoffProj, hammerProj, mollweideProj, graticule, outline} from "./utils"
 import "./mainMap.css"
@@ -18,23 +20,6 @@ const { Option } = Select;
 
 const versor = require("versor");
 
-const projections = [
-  {
-    key: 'Aitoff',
-    text: 'Aitoff',
-    value: "A"
-  },
-  {
-    key: 'Hammer',
-    text: 'Hammer',
-    value: "H"
-  },
-  {
-    key: 'Mollweide',
-    text: 'Mollweide',
-    value: "M"
-  }
-]
 
 function Map(props){
 
@@ -145,8 +130,9 @@ function Map(props){
     });
   }
 
-  // handlePdf = e => {
-  //   window.open(require('../resources/info.pdf'), "_blank")
+  // const handlePdf = e => {
+  //   const urlPDF = require()
+  //   window.open({pdf}, "_blank")
   // }
 
   function InfoPanel() {
@@ -167,11 +153,12 @@ function Map(props){
             <p>Observation ID: 04_230T01_9000002374</p>
             <p>Observation ID: 04_230T01_9000002374</p>
             <p>Telescope: laxpc1</p>
-            <Button 
-              // onClick={handlePdf}
+            <a href = {pdf} target = "_blank">Download Pdf</a>
+            {/* <Button 
+              onClick={handlePdf}
             >
               Download PDF
-            </Button>
+            </Button> */}
           </div>
         )}
         
@@ -206,12 +193,36 @@ function Map(props){
 
   }
 
+  useEffect(() => {
+    setPath(() => geoPath(projection))
+  }, [projection]);
+
   const handleProjChange = (e, value) => {
-    console.log(value)
+    
+    if(value.value === "A") {
+      setProjection(() => aitoffProj)
+    } else if(value.value === "H") {
+      setProjection(() => hammerProj)
+    } if(value.value === "M") {
+      setProjection(() => mollweideProj)
+    }
   }
 
   const onFinish = (values) => {
-   console.log(values) 
+
+    var res = findWithAttr(sources, "name", values.search)
+    if (res === -1) {
+      res = findWithAttr(sources, "name2", values.search)
+    }
+
+    if (res === -1) {
+      res = findWithAttr(sources, "name3", values.search)
+    }
+
+    if (res !== -1) {
+      setHighlightId(res)
+      toggleHighlight(true)
+    }
   }
 
   const onFinishFailed = (errorInfo) => {
@@ -236,8 +247,8 @@ function Map(props){
 
           <Form.Item
             label="Search"
+            placeholder="Name (Primary/Alternate)"
             name="search"
-            rules={[{ required: true, message: "Please input your query!" }]}
           >
             <Input  />
           </Form.Item>
@@ -257,7 +268,7 @@ function Map(props){
           layout="inline"
         >
         <Form.Item
-          label="Projection"
+          label="Projection (ICRS)"
           name="type"
           rules={[{ required: true, message: "Please select projection" }]}
 
@@ -267,8 +278,8 @@ function Map(props){
             justifyItems : "flex-end"
           }}
         >
-          <Select placeholder="Query Type" onChange = {handleProjChange} >
-            <Option value="A">AITOFF</Option>
+          <Select placeholder="Projectiom" onChange = {handleProjChange} >
+            <Option value="A">Aitoff</Option>
             <Option value="H">Hammer</Option>
             <Option value="M">Mollweide</Option>
           </Select>
@@ -349,15 +360,41 @@ function Map(props){
           onClick={ () => handleSourceClick() }
         />
         <text 
-          x={ projection([sources[highlightId].equatorial_ra, sources[highlightId].equatorial_dec])[0] + 4 }
-          y={ projection([sources[highlightId].equatorial_ra, sources[highlightId].equatorial_dec])[1] + 4 }
-          class="small"
-          fill="red"
+          x={ projection([sources[highlightId].equatorial_ra, sources[highlightId].equatorial_dec])[0] + 8 }
+          y={ projection([sources[highlightId].equatorial_ra, sources[highlightId].equatorial_dec])[1] + 6 }
+          class="large"
+          fill="#DAFF1F"
           >
             {sources[highlightId].name}
         </text>
         </g>
       )}
+      <g>
+        <text 
+          x={ projection([0,0])[0] }
+          y={ projection([0,0])[1] }
+          class="small"
+          fill="yellow"
+          >
+            Vernal Equinox
+        </text>
+        <text 
+          x={ projection([0,90])[0] }
+          y={ projection([0,90])[1] }
+          class="small"
+          fill="yellow"
+          >
+            NCP
+        </text>
+        <text 
+          x={ projection([0,-90])[0] }
+          y={ projection([0,-90])[1] }
+          class="small"
+          fill="yellow"
+          >
+            SCP
+        </text>
+      </g>
       
       </svg>
 

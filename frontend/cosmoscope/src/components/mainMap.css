@@ -23,19 +23,8 @@ svg{
   left: 0%;
   text-align: left;
   z-index: 1;
-  background-color: aqua;
+  background-color: #B8F2E6;
   opacity: 0.5;
   box-shadow: 5px 10px;
-}
-
-.newsletter-bg {
-    
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 30px;
-    margin: 0 auto;
-  background-position: center -100px;
-  -webkit-filter: blur(7px);
+  color: #1E000E;
 }
