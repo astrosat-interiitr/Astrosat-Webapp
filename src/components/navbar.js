@@ -16,7 +16,7 @@ class Navbar extends Component {
                         <a class="nav-link pr-4" style={{color:"#000"}} href="#">About Us</a>
                     </li>
                     </ul>
-                    <a href="https://github.com/astrosat-interiitr/Astrosat-Webapp" target="_blank" >
+                    <a href="https://github.com/astrosat-interiitr" target="_blank" >
                         <img className="image" src={gitlogo} alt="Github Icon" width="64px" height="64px"/>
                     </a>
                 </div>
