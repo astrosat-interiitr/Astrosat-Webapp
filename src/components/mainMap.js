@@ -171,9 +171,9 @@ function Map(props){
       <div class="bg">
         <div class="bgg"> 
         <p>Name: {sources[highlightId].name}</p>
-        <p>Ra, Dec: {sources[highlightId].equatorial_ra}, {sources[highlightId].equatorial_dec}</p>
-        <p>Gal. Long/Lat: {sources[highlightId].galactic_longitude}, {sources[highlightId].galactic_latitude}</p>
-        <p>X-Ray Flux: {sources[highlightId].x_ray_flux}</p>
+        <p>Ra, Dec (Deg): {sources[highlightId].equatorial_ra}, {sources[highlightId].equatorial_dec}</p>
+        <p>Gal. Long/Lat (Deg): {sources[highlightId].galactic_longitude}, {sources[highlightId].galactic_latitude}</p>
+        <p>X-Ray Flux (mJy): {sources[highlightId].x_ray_flux}</p>
         <p>AstroSat? : {isAstroSat ? "Yes" : "No"}</p>
         </div>
         {isAstroSat && (
