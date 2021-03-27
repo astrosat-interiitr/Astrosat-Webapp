@@ -46,7 +46,7 @@ function Map(props){
 
   useEffect(() => {
 
-    fetch("http://127.0.0.1:8000/cosmicsource/")
+    fetch("https://backend.cosmoscope.in/cosmicsource/")
   .then(response => {
     if (response.status !== 200) {
       console.log(`There was a problem: ${response.status}`)
