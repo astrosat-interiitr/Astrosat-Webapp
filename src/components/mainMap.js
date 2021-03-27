@@ -185,11 +185,6 @@ function Map(props){
             <p>Observation ID: {astrosat[astrosatId].observation_id}</p>
             <p>Telescope: {astrosat[astrosatId].telescope}</p>
             <a href = {pdf} target = "_blank">Download Pdf</a>
-            {/* <Button 
-              onClick={handlePdf}
-            >
-              Download PDF
-            </Button> */}
           </div>
         )}
         
@@ -244,8 +239,8 @@ function Map(props){
       }
 
       if (astr !== -1) {
-        setIsAstroSat(true)
         setAstrosatId(astr)
+        setIsAstroSat(true)
       } else {
         setIsAstroSat(false)
       }
