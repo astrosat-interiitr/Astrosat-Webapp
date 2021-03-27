@@ -177,7 +177,8 @@ function Map(props){
         <p>AstroSat? : {isAstroSat ? "Yes" : "No"}</p>
         </div>
         {isAstroSat && (
-          <div>
+          <div style={{color:"blue"}}>
+            <p></p>
             <p>Observation date: {astrosat[astrosatId].date}</p>
             <p>Observation time: {astrosat[astrosatId].time}</p>
             <p>Cycle: {astrosat[astrosatId].cycle}</p>
@@ -382,7 +383,7 @@ function Map(props){
           cy={ projection([sources[highlightId].equatorial_ra, sources[highlightId].equatorial_dec])[1] }
           r={10}
           fill="none"
-          stroke="#7021e4"
+          stroke= {isAstroSat ? "#C32F27" : "#7021e4"}
           strokeWidth="3"
           className="highlight"
           onClick={ () => handleSourceClick() }
