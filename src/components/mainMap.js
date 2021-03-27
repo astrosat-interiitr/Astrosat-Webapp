@@ -6,9 +6,9 @@ import pdf from "../resources/info.pdf"
 import {geoPath, } from "d3-geo"
 import * as d3 from "d3"
 
-import { Dropdown} from 'semantic-ui-react'
+import { feature } from "topojson-client"
 
-import {aitoffProj, hammerProj, mollweideProj, graticule, outline} from "./utils"
+import {aitoffProj, hammerProj, mollweideProj, graticule, outline, axes1, axes2} from "./utils"
 import "./mainMap.css"
 
 import Navbar from "./navbar"
@@ -26,8 +26,9 @@ function Map(props){
   const [mapWidth, setMapWidth] = useState(window.innerWidth);
   const [highlight, toggleHighlight] = useState(false)
   const [highlightId, setHighlightId] = useState()
-  const [query, setQuery] = useState("")
-  const [projVal, setProjVal] = useState("A")
+  const [astrosat, setAstrosat] = useState([])
+  const [isAstroSat, setIsAstroSat] = useState(false)
+  const [astrosatId, setAstrosatId] = useState()
 
   const [projection, setProjection] = useState(() => aitoffProj);
 
@@ -43,7 +44,9 @@ function Map(props){
   var v0, q0, r0;
   
   
-
+  useEffect(() => {
+    setPath(() => geoPath(projection))
+  }, [projection]);
   useEffect(() => {
 
     fetch("https://backend.cosmoscope.in/cosmicsource/")
@@ -54,6 +57,17 @@ function Map(props){
     }
     response.json().then(cosmicData => {
       setSources(cosmicData)
+    })
+  })
+
+  fetch("https://backend.cosmoscope.in/astrosat/")
+  .then(response => {
+    if (response.status !== 200) {
+      console.log(`There was a problem: ${response.status}`)
+      return
+    }
+    response.json().then(cosmicData => {
+      setAstrosat(cosmicData)
     })
   })
     
@@ -86,6 +100,23 @@ function Map(props){
     
     toggleHighlight(highlight => !highlight)
     setHighlightId(id)
+
+    var astr = findWithAttr(astrosat, "name", sources[id].name)
+      
+      if( astr === -1) {
+        astr = findWithAttr(astrosat, "name", sources[id].name2)
+      }
+
+      if( astr === -1) {
+        astr = findWithAttr(astrosat, "name", sources[id].name3)
+      }
+
+      if (astr !== -1) {
+        setIsAstroSat(true)
+        setAstrosatId(astr)
+      } else {
+        setIsAstroSat(false)
+      }
   }
 
   function zoom(projection, {
@@ -143,16 +174,15 @@ function Map(props){
         <p>Ra, Dec: {sources[highlightId].equatorial_ra}, {sources[highlightId].equatorial_dec}</p>
         <p>Gal. Long/Lat: {sources[highlightId].galactic_longitude}, {sources[highlightId].galactic_latitude}</p>
         <p>X-Ray Flux: {sources[highlightId].x_ray_flux}</p>
-        <p>AstroSat? : {highlightId === 167 ? "yes" : "no"}</p>
+        <p>AstroSat? : {isAstroSat ? "Yes" : "No"}</p>
         </div>
-        {highlightId === 167 && (
+        {isAstroSat && (
           <div>
-            <p>Observation date: 2018-09-17</p>
-            <p>Observation time: 08:09:52</p>
-            <p>Cycle: A04_230	T01</p>
-            <p>Observation ID: 04_230T01_9000002374</p>
-            <p>Observation ID: 04_230T01_9000002374</p>
-            <p>Telescope: laxpc1</p>
+            <p>Observation date: {astrosat[astrosatId].date}</p>
+            <p>Observation time: {astrosat[astrosatId].time}</p>
+            <p>Cycle: {astrosat[astrosatId].cycle}</p>
+            <p>Observation ID: {astrosat[astrosatId].observation_id}</p>
+            <p>Telescope: {astrosat[astrosatId].telescope}</p>
             <a href = {pdf} target = "_blank">Download Pdf</a>
             {/* <Button 
               onClick={handlePdf}
@@ -173,29 +203,8 @@ function Map(props){
         }
     }
     return -1;
-}
-
-  const onSubmit = (e) => {
-    e.preventDefault();
-    var res = findWithAttr(sources, "name", query)
-    if (res === -1) {
-      res = findWithAttr(sources, "name2", query)
-    }
-
-    if (res === -1) {
-      res = findWithAttr(sources, "name3", query)
-    }
-
-    if (res !== -1) {
-      setHighlightId(res)
-      toggleHighlight(true)
-    }
-
   }
 
-  useEffect(() => {
-    setPath(() => geoPath(projection))
-  }, [projection]);
 
   const handleProjChange = (e, value) => {
     
@@ -222,7 +231,26 @@ function Map(props){
     if (res !== -1) {
       setHighlightId(res)
       toggleHighlight(true)
+
+      var astr = findWithAttr(astrosat, "name", sources[res].name)
+      
+      if( astr === -1) {
+        astr = findWithAttr(astrosat, "name", sources[res].name2)
+      }
+
+      if( astr === -1) {
+        astr = findWithAttr(astrosat, "name", sources[res].name3)
+      }
+
+      if (astr !== -1) {
+        setIsAstroSat(true)
+        setAstrosatId(astr)
+      } else {
+        setIsAstroSat(false)
+      }
     }
+
+
   }
 
   const onFinishFailed = (errorInfo) => {
