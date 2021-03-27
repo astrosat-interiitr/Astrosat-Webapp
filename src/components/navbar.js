@@ -17,7 +17,7 @@ class Navbar extends Component {
                     </li>
                     </ul>
                     <a href="https://github.com/astrosat-interiitr" target="_blank" >
-                        <img className="image" src={gitlogo} alt="Github Icon" width="64px" height="64px"/>
+                        <img className="image" src={gitlogo} alt="Github Icon" width="32px" height="32px"/>
                     </a>
                 </div>
         </nav>
