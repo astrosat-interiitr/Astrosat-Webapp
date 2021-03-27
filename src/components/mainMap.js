@@ -6,8 +6,6 @@ import pdf from "../resources/info.pdf"
 import {geoPath, } from "d3-geo"
 import * as d3 from "d3"
 
-import { feature } from "topojson-client"
-
 import {aitoffProj, hammerProj, mollweideProj, graticule, outline, axes1, axes2} from "./utils"
 import "./mainMap.css"
 
@@ -19,6 +17,8 @@ import { Form, Input, Button, Checkbox, Select, Row, Col } from "antd";
 const { Option } = Select;
 
 const versor = require("versor");
+const axios = require('axios');
+
 
 
 function Map(props){
@@ -29,6 +29,8 @@ function Map(props){
   const [astrosat, setAstrosat] = useState([])
   const [isAstroSat, setIsAstroSat] = useState(false)
   const [astrosatId, setAstrosatId] = useState()
+  const [publ, setPubl] = useState([])
+  const [pdfUrl, setPdfUrl] = useState()
 
   const [projection, setProjection] = useState(() => aitoffProj);
 
@@ -184,7 +186,7 @@ function Map(props){
             <p>Cycle: {astrosat[astrosatId].cycle}</p>
             <p>Observation ID: {astrosat[astrosatId].observation_id}</p>
             <p>Telescope: {astrosat[astrosatId].telescope}</p>
-            <a href = {pdf} target = "_blank">Download Pdf</a>
+            <a href = {pdfUrl} target = "_blank">Download Pdf</a>
           </div>
         )}
         
@@ -201,6 +203,27 @@ function Map(props){
     return -1;
   }
 
+  
+
+  function getPdfUrl() {
+
+    var initString = "https://backend.cosmoscope.in/generate?"
+
+    for(var i = 0; i < publ.length; i += 1) {
+      var qString = `publication_ids=${publ[i]["id"]}&`
+      initString = initString.concat(qString)
+    }
+
+    var qString1 = `cosmic_source_id=${highlightId}&`
+    initString = initString.concat(qString1)
+
+    var qString2 = `astrosat_ids=${astrosatId}`
+    initString = initString.concat(qString2)
+
+    console.log(initString);
+    return initString
+  }
+
 
   const handleProjChange = (e, value) => {
     
@@ -211,6 +234,18 @@ function Map(props){
     } if(value.value === "M") {
       setProjection(() => mollweideProj)
     }
+  }
+
+  useEffect(() => {
+    setPdfUrl(getPdfUrl)
+  }, [publ]);
+
+  async function getPubs (query) {
+
+    const res = await axios.get('https://backend.cosmoscope.in/publication', { params: { search: query } })
+    setPubl(res.data.results);
+
+    getPdfUrl()
   }
 
   const onFinish = (values) => {
@@ -241,6 +276,8 @@ function Map(props){
       if (astr !== -1) {
         setAstrosatId(astr)
         setIsAstroSat(true)
+        getPubs(astrosat[astr].name)
+           
       } else {
         setIsAstroSat(false)
       }
